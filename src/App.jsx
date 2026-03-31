@@ -416,7 +416,7 @@ const TaskIconPicker = ({ value, onValueChange, usedIcons = [] }) => {
     )
 }
 
-const AnimatedHeader = () => {
+const Header = () => {
     const [index, setIndex] = useState(0);
     const phrases = ["Fast-track your YouTube Growth", "Grow like pro", "Unlock your potential", "Build your dream channel"];
     useEffect(() => {
@@ -425,7 +425,10 @@ const AnimatedHeader = () => {
     }, []);
 
     return (
-        <div className="w-full flex justify-end p-4 sticky top-0 z-50 pointer-events-none">
+        <div className="w-full flex flex-col md:flex-row justify-center md:justify-between items-center gap-4 p-4 sticky top-0 z-50 pointer-events-none">
+            <a href="http://jaiminsuthar.com/" className="pointer-events-auto transition-transform hover:scale-105">
+                <img src="https://static.wixstatic.com/media/23b1fb_d6a6db5d16ef47bcb9e209773d7b964a~mv2.png" alt="Jaimin Suthar" className="h-8 md:h-10 object-contain drop-shadow-md" />
+            </a>
             <a 
                 href="https://www.jaiminsuthar.com/tools/fast-track" 
                 target="_blank" 
@@ -438,6 +441,30 @@ const AnimatedHeader = () => {
                     </div>
                 </div>
             </a>
+        </div>
+    );
+};
+
+const FeedbackTag = () => {
+    const [copied, setCopied] = useState(false);
+    const email = "jaimin@jaiminsuthar.com";
+    
+    const handleCopy = () => {
+        navigator.clipboard.writeText(email);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))]/30 py-4 px-6 rounded-2xl border border-[hsl(var(--border))] max-w-2xl mx-auto my-6 animate-fadeIn">
+            <span className="font-medium text-center">For Feedback and Suggestions, reachout to</span>
+            <div className="flex items-center gap-1 bg-[hsl(var(--background))] px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] shadow-sm">
+                <Mail size={16} className="text-[hsl(var(--primary))] mr-1 opacity-70" />
+                <span className="font-bold text-[hsl(var(--foreground))] select-all">{email}</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7 ml-1 hover:bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]" onClick={handleCopy} title="Copy email">
+                    {copied ? <CheckSquare size={16} className="text-green-500" /> : <Copy size={16} />}
+                </Button>
+            </div>
         </div>
     );
 };
@@ -1317,7 +1344,7 @@ export default function App() {
         <GlobalStyles />
         <div className="min-h-screen bg-[hsl(var(--background))] selection:bg-[hsl(var(--primary))]/20 selection:text-[hsl(var(--primary))] pb-20 font-sans">
         
-        <AnimatedHeader />
+        <Header />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-12">
             {step === 0 && (
@@ -1355,6 +1382,9 @@ export default function App() {
                         <p className="text-[hsl(var(--muted-foreground))] text-sm">Load Jaimin's default workflows.</p>
                     </div>
                 </div>
+                
+                <FeedbackTag />
+
                 </div>
             </div>
             )}
@@ -1745,6 +1775,8 @@ export default function App() {
                 return (
                 <div className="space-y-8 animate-fadeIn relative">
                     
+                    <FeedbackTag />
+
                     {contentTypes.length > 1 && (
                         <Card className="mb-6 border-t-4 border-t-blue-500 relative shadow-md">
                             {isCalculating && (
