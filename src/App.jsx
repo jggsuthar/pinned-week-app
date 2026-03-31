@@ -430,7 +430,7 @@ const Header = () => {
                 <img src="https://static.wixstatic.com/media/23b1fb_d6a6db5d16ef47bcb9e209773d7b964a~mv2.png" alt="Jaimin Suthar" className="h-8 md:h-10 object-contain drop-shadow-md" />
             </a>
             <a 
-                href="https://www.jaiminsuthar.com/tools/fast-track" 
+                href="https://www.jaiminsuthar.com/fast-track" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="bg-[#facc15] pointer-events-auto text-black px-6 md:px-8 py-2.5 rounded-full font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer flex items-center justify-center min-w-[280px] md:min-w-[350px] no-underline"
