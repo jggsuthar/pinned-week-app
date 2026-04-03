@@ -6,7 +6,7 @@ import {
     Minus, ChevronsUp, ChevronsUpDown, Loader2, Video, MonitorPlay, Smartphone, 
     Radio, PlaySquare, Film, Tv, Gamepad2, SlidersHorizontal, PenTool, Eye, Music,
     Youtube, Clapperboard, Monitor, RadioReceiver, Pen, Image as ImageIcon, Mail,
-    XCircle
+    XCircle, Maximize, Minimize
 } from 'lucide-react';
 
 // --- Global Styles ---
@@ -430,7 +430,7 @@ const Header = () => {
                 <img src="https://static.wixstatic.com/media/23b1fb_d6a6db5d16ef47bcb9e209773d7b964a~mv2.png" alt="Jaimin Suthar" className="h-8 md:h-10 object-contain drop-shadow-md" />
             </a>
             <a 
-                href="https://www.jaiminsuthar.com/fast-track" 
+                href="https://www.jaiminsuthar.com/grow" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="bg-[#facc15] pointer-events-auto text-black px-6 md:px-8 py-2.5 rounded-full font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer flex items-center justify-center min-w-[280px] md:min-w-[350px] no-underline"
@@ -469,10 +469,119 @@ const FeedbackTag = () => {
     );
 };
 
-const CalendarTable = ({ weekDays, zones, dailySchedule, scheduledCounts, contentTypes, downloadCalendarJpg, downloading, isCalculating, calendarView }) => {
+const CalendarTable = ({ weekDays, zones, dailySchedule, scheduledCounts, contentTypes, isCalculating, calendarView }) => {
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const printRef = useRef(null);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+        if (isFullscreen && containerRef.current) {
+            containerRef.current.scrollTop = 0;
+        }
+    }, [isFullscreen]);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isFullscreen) {
+                setIsFullscreen(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFullscreen]);
+
+    const handleDownload = async () => {
+        if (!printRef.current) return;
+        setIsDownloading(true);
+        try {
+            if (!window.htmlToImage) {
+                console.error("html-to-image not loaded yet");
+                return;
+            }
+            if (document.fonts?.ready) await document.fonts.ready;
+            
+            const node = printRef.current;
+            const scrollContainer = node.querySelector('.overflow-x-auto');
+            
+            // 1. Save original styles to revert later
+            const originalNodeCssText = node.style.cssText;
+            const originalScrollCssText = scrollContainer ? scrollContainer.style.cssText : '';
+
+            // 2. Force the container and scroll area to completely expand horizontally
+            node.style.setProperty('overflow', 'visible', 'important');
+            node.style.setProperty('width', 'max-content', 'important');
+            node.style.setProperty('min-width', '100%', 'important');
+            
+            if (scrollContainer) {
+                scrollContainer.style.setProperty('overflow', 'visible', 'important');
+                scrollContainer.style.setProperty('width', 'max-content', 'important');
+                scrollContainer.style.setProperty('min-width', '100%', 'important');
+            }
+
+            // 3. Add the requested watermark text at the bottom
+            const watermark = document.createElement('div');
+            watermark.id = "temp-watermark";
+            watermark.style.textAlign = 'center';
+            watermark.style.paddingTop = '16px';
+            watermark.style.paddingBottom = '8px';
+            watermark.style.fontSize = '14px';
+            watermark.style.fontWeight = '600';
+            watermark.style.color = '#64748b'; // slate-500
+            watermark.innerHTML = 'Explore more Growth hacks on <strong style="color: #0f172a;">jaiminsuthar.com</strong>';
+            
+            const cardContent = node.querySelector('[data-id="calendar-card-content"]');
+            if (cardContent) cardContent.appendChild(watermark);
+
+            // Wait a moment to let the browser apply the fully expanded layout
+            await new Promise(r => setTimeout(r, 150));
+
+            // 4. Measure the full unclipped dimensions
+            const targetWidth = node.scrollWidth;
+            const targetHeight = node.scrollHeight;
+
+            const dataUrl = await window.htmlToImage.toJpeg(node, {
+                quality: 0.95,
+                backgroundColor: '#ffffff',
+                pixelRatio: 2,
+                width: targetWidth,
+                height: targetHeight,
+                style: {
+                    width: `${targetWidth}px`,
+                    height: `${targetHeight}px`,
+                    margin: '0'
+                },
+                // Ignore the buttons so they don't show up in the downloaded JPG
+                filter: (child) => !child.dataset?.hideOnExport
+            });
+            
+            // 5. Revert DOM changes back to normal
+            node.style.cssText = originalNodeCssText;
+            if (scrollContainer) scrollContainer.style.cssText = originalScrollCssText;
+            if (watermark.parentNode) watermark.parentNode.removeChild(watermark);
+
+            const link = document.createElement('a');
+            link.download = `pinned-week-${new Date().toISOString().slice(0, 10)}.jpg`;
+            link.href = dataUrl;
+            link.click();
+        } catch (error) {
+            console.error("Failed to download image", error);
+            
+            // Fail-safe cleanup
+            const node = printRef.current;
+            if (node) node.style.cssText = '';
+            const scrollContainer = node?.querySelector('.overflow-x-auto');
+            if (scrollContainer) scrollContainer.style.cssText = '';
+            const watermark = document.getElementById("temp-watermark");
+            if (watermark) watermark.remove();
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
     return (
-        <div className="mt-12 relative">
-        <Card className="overflow-hidden border-2">
+        <div ref={containerRef} className={isFullscreen ? "fixed inset-0 z- bg-[hsl(var(--background))] p-4 md:p-8 overflow-auto animate-fadeIn" : "mt-12 relative"}>
+        <Card ref={printRef} className={cn("overflow-hidden border-2 bg-[hsl(var(--background))]", isFullscreen ? "min-h-full shadow-2xl" : "")}>
             <CardHeader className="bg-[hsl(var(--muted))]/20">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                 <div>
@@ -487,10 +596,26 @@ const CalendarTable = ({ weekDays, zones, dailySchedule, scheduledCounts, conten
                     ))} this week.
                 </CardDescription>
                 </div>
-                <Button data-download-button variant="outline" size="sm" onClick={downloadCalendarJpg} disabled={downloading}>
-                <Download size={16} className="mr-2" />
-                <span className="hidden sm:inline">{downloading ? "Downloading..." : "Download as JPG"}</span>
-                </Button>
+                <div className="flex flex-wrap gap-2" data-hide-on-export="true">
+                    {isFullscreen && (
+                        <Button variant="default" size="sm" onClick={handleDownload} disabled={isDownloading}>
+                            {isDownloading ? <Loader2 size={16} className="sm:mr-2 animate-spin" /> : <Download size={16} className="sm:mr-2" />}
+                            <span className="hidden sm:inline">{isDownloading ? "Downloading..." : "Download Calendar"}</span>
+                        </Button>
+                    )}
+                    <Button 
+                        variant={isFullscreen ? "outline" : "default"} 
+                        size="sm" 
+                        onClick={() => setIsFullscreen(!isFullscreen)}
+                        className={!isFullscreen ? "font-bold shadow-md hover:-translate-y-0.5 transition-transform" : ""}
+                    >
+                        {isFullscreen ? (
+                            <><Minimize size={16} className="sm:mr-2" /> <span className="hidden sm:inline">Exit Full Screen</span></>
+                        ) : (
+                            <><Maximize size={16} className="sm:mr-2" /> <span className="hidden sm:inline">Full Screen</span></>
+                        )}
+                    </Button>
+                </div>
             </div>
             <p className="text-xs text-[hsl(var(--muted-foreground))] pt-2">This schedule accurately represents the dependency timeline. Prerequisite tasks are mapped sequentially before dependent tasks.</p>
             </CardHeader>
@@ -621,9 +746,9 @@ export default function App() {
     
     useEffect(() => {
         setIsClient(true);
-        if (!window.html2canvas) {
+        if (!window.htmlToImage) {
             const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js';
             script.async = true;
             document.head.appendChild(script);
         }
@@ -653,10 +778,8 @@ export default function App() {
     const [capacityMode, setCapacityMode] = useState('maximum'); // 'maximum' or 'recommended'
     const [calendarView, setCalendarView] = useState('both'); // 'names', 'icons', 'both'
     
-    const [downloading, setDownloading] = useState(false);
     const [isCalculating, setIsCalculating] = useState(false);
     const [showRecommendedInfo, setShowRecommendedInfo] = useState(false);
-    const calendarRef = useRef(null);
 
     // Ensure icon selection stays unique across series dynamically
     useEffect(() => {
@@ -671,107 +794,6 @@ export default function App() {
     const getUniqueId = (prefix = 'id') => {
         idCounter.current += 1;
         return `${prefix}-${idCounter.current}`;
-    };
-
-    const downloadCalendarJpg = async () => {
-        if (!calendarRef.current) return;
-        setDownloading(true);
-        const originalFontSize = document.documentElement.style.fontSize;
-        let wrapperEl = null;
-        try {
-            const h2c = window.html2canvas;
-            if (!h2c) { setDownloading(false); return; }
-            if (document.fonts?.ready) await document.fonts.ready;
-            document.documentElement.style.fontSize = '16px';
-            const node = calendarRef.current;
-            const clone = node.cloneNode(true);
-            
-            wrapperEl = document.createElement("div");
-            wrapperEl.style.position = "fixed";
-            wrapperEl.style.left = "-10000px"; 
-            wrapperEl.style.top = "0";
-            wrapperEl.style.width = "1280px"; 
-            wrapperEl.style.background = "#ffffff";
-            wrapperEl.style.zIndex = "-1";
-            wrapperEl.style.padding = "40px"; // Increased padding significantly
-            wrapperEl.style.margin = "0";
-            
-            clone.style.overflow = "visible";
-            clone.style.width = "100%"; 
-            clone.style.height = "auto";
-            clone.style.maxWidth = "none";
-            clone.style.maxHeight = "none";
-            
-            // Inject a style to the clone to ensure absolute safety against text cropping and misalignment
-            const styleEl = document.createElement('style');
-            styleEl.innerHTML = `
-                .truncate { 
-                    white-space: normal !important; 
-                    overflow: visible !important; 
-                    text-overflow: clip !important; 
-                    word-break: break-word !important; 
-                    line-height: 1.4 !important;
-                }
-                .break-words {
-                    line-height: 1.4 !important;
-                }
-                [data-export-badge] {
-                    line-height: 1 !important;
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    padding-top: 4px !important;
-                    padding-bottom: 4px !important;
-                }
-                .legend-item {
-                    display: flex !important;
-                    align-items: center !important;
-                }
-                .legend-item svg {
-                    display: block !important;
-                }
-            `;
-            clone.appendChild(styleEl);
-
-            const buttonInClone = clone.querySelector('[data-download-button]');
-            if(buttonInClone) buttonInClone.style.display = 'none';
-            
-            const promoFooter = document.createElement('div');
-            promoFooter.style.textAlign = 'center';
-            promoFooter.style.marginTop = '24px';
-            promoFooter.style.fontSize = '14px';
-            promoFooter.style.color = '#475569';
-            promoFooter.style.fontFamily = 'Poppins, sans-serif';
-            promoFooter.innerHTML = 'Explore More on YouTube mastery on <a href="https://www.jaiminsuthar.com" target="_blank" style="color: #0f172a; font-weight: 600; text-decoration: none;">jaiminsuthar.com</a>';
-            
-            const cardContent = clone.querySelector('[data-id="calendar-card-content"]');
-            if (cardContent) cardContent.appendChild(promoFooter);
-            
-            wrapperEl.appendChild(clone);
-            document.body.appendChild(wrapperEl);
-            
-            const fullHeight = clone.scrollHeight;
-            const canvas = await h2c(clone, {
-                backgroundColor: "#ffffff", scale: 2, useCORS: true, allowTaint: true, logging: false,
-                scrollX: 0, scrollY: 0, width: 1280, height: fullHeight + 200, windowWidth: 1280, windowHeight: fullHeight + 400,
-            });
-            const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.95));
-            if (!blob) return;
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `calendar-${new Date().toISOString().slice(0, 10)}.jpg`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(url);
-        } catch (e) {
-            console.error("download failed:", e);
-        } finally {
-            if (wrapperEl) wrapperEl.remove();
-            document.documentElement.style.fontSize = originalFontSize;
-            setDownloading(false);
-        }
     };
 
     const StepHeader = ({ currentStep }) => (
@@ -2019,8 +2041,8 @@ export default function App() {
                     </Card>
                     </div>
                 
-                <div ref={calendarRef}>
-                    <CalendarTable weekDays={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']} zones={zones} dailySchedule={schedule.dailySchedule} scheduledCounts={scheduledCounts} contentTypes={contentTypes} downloadCalendarJpg={downloadCalendarJpg} downloading={downloading} isCalculating={isCalculating} calendarView={calendarView} />
+                <div>
+                    <CalendarTable weekDays={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']} zones={zones} dailySchedule={schedule.dailySchedule} scheduledCounts={scheduledCounts} contentTypes={contentTypes} isCalculating={isCalculating} calendarView={calendarView} />
                 </div>
                 </div>
                 );
