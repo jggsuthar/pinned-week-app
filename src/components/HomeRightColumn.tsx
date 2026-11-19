@@ -10,7 +10,7 @@ import {
   Mail,
   Upload,
 } from 'lucide-react';
-import appIconImg from '../../Assets/tool-pws.png';
+import appIconImg from '../../Assets/tool-pws.jpg';
 import { usePwsStore } from '../store/usePwsStore';
 
 export const HomeRightColumn: React.FC<{ className?: string }> = ({
@@ -50,7 +50,7 @@ export const HomeRightColumn: React.FC<{ className?: string }> = ({
           fill
           sizes="80px"
           priority
-          className="object-contain p-1.5"
+          className="object-contain p-1"
         />
       </div>
 

@@ -10,6 +10,7 @@ import {
   Clock,
   Download,
   ExternalLink,
+  FileJson,
   Globe,
   RotateCcw,
   Sparkles,
@@ -46,7 +47,7 @@ function getContrastTextColor(hexColor: string): string {
 }
 
 export const MasterTimetableExportStudio: React.FC = () => {
-  const { zones, calendarSlots, contentTypes, solverResult } = usePwsStore();
+  const { zones, calendarSlots, contentTypes, solverResult, exportStateToJson } = usePwsStore();
 
   const [viewMode, setViewMode] = useState<'GRID' | 'CHECKLIST'>('GRID');
   const [isExporting, setIsExporting] = useState(false);
@@ -95,6 +96,18 @@ export const MasterTimetableExportStudio: React.FC = () => {
     scheduledBlocks.length > 0
       ? Math.round((completedCount / scheduledBlocks.length) * 100)
       : 0;
+
+  // Export full configuration as JSON
+  const handleExportJson = () => {
+    const jsonStr = exportStateToJson();
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pws-creator-schedule-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Export to PNG (2x High-DPI)
   const handleExportPng = useCallback(async () => {
@@ -226,9 +239,19 @@ export const MasterTimetableExportStudio: React.FC = () => {
 
           <button
             type="button"
+            onClick={handleExportJson}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200/90 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition shadow-xs ml-auto sm:ml-0"
+            title="Export schedule configuration as JSON"
+          >
+            <FileJson className="w-3.5 h-3.5 text-[#46b1e1]" />
+            <span>Export JSON</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleExportPng}
             disabled={isExporting}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0c1527] hover:bg-slate-800 text-white font-bold text-xs transition shadow-sm disabled:opacity-60 ml-auto sm:ml-0"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0c1527] hover:bg-slate-800 text-white font-bold text-xs transition shadow-sm disabled:opacity-60"
             title="Download high-resolution PNG"
           >
             <Download className="w-3.5 h-3.5 text-[#46b1e1]" />
